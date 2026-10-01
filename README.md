@@ -1,4 +1,4 @@
-# AXICMS
+# AXI-OSBRAND operating system for brands.
 
 ![Shop screenshot](shop.png)
 
