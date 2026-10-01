@@ -2,7 +2,10 @@
 
 **Open-source Commerce Operating System for Brands.**
 
-AXIOSBRAND is a self-hosted platform for running modern commerce from a single system — storefront, content, catalog, customers, orders, markets, operations, infrastructure, and AI.
+AXIOSBRAND is an open-source commerce operating system for brands.
+Run storefront, content, catalog, customers, orders, markets, operations and AI from one self-hosted platform.
+
+![AXIOSBRAND](./shop.png)
 
 Built for independent brands, fashion labels, design studios, art projects, and teams that want full control over their commerce stack without being locked into a hosted platform.
 
