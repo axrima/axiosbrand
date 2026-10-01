@@ -1,45 +1,21 @@
-siberianstones.com SIB-CMS Proprietary Business License
-Copyright (c) 2026 siberianstones.com. All rights reserved.
+MIT License
 
-This software, including without limitation all source code, object code,
-designs, layouts, databases, APIs, documentation, assets, business logic,
-trade dress, and related materials (collectively, the "Software"), is the
-exclusive proprietary property of siberianstones.com.
+Copyright (c) 2026 Axrima Lab
 
-No permission is granted to use, copy, reproduce, modify, adapt, translate,
-publish, distribute, sublicense, sell, lease, rent, transfer, disclose,
-reverse engineer, decompile, create derivative works from, or otherwise
-exploit the Software, in whole or in part, in any form or by any means,
-without the express prior written permission of siberianstones.com.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-Any access to the Software is temporary, limited, revocable, non-exclusive,
-and solely for the internal business purpose expressly authorized in writing
-by siberianstones.com. In the absence of such written authorization, all rights are
-strictly reserved and any possession, access, or use is unauthorized.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-The following actions are expressly prohibited unless siberianstones.com has granted
-prior written consent:
-
-1. Copying or mirroring the Software or any substantial part of it.
-2. Launching competing or substantially similar products based on the
-   Software.
-3. Reusing the architecture, code structure, interface design, data models,
-   content, branding elements, or protected business logic of the Software.
-4. Removing, bypassing, or interfering with any license, attribution,
-   security, or technical protection mechanisms.
-5. Granting third parties access to the Software, whether for commercial,
-   outsourcing, white-label, agency, or resale purposes.
-
-Unauthorized copying, commercial use, disclosure, or misappropriation of the
-Software is a material violation of this license and may also violate
-copyright, trade secret, unfair competition, and other applicable laws.
-siberianstones.com reserves the right to revoke access immediately and pursue all
-available civil, contractual, and other remedies to the maximum extent
-permitted by law.
-
-This license does not transfer to you any ownership rights, intellectual
-property rights, or implied rights of any kind. No rights are granted except
-as expressly stated in a signed written agreement with siberianstones.com.
-
-For licensing, partnership, OEM, resale, or other commercial permissions,
-contact siberianstones.com directly for written approval.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
