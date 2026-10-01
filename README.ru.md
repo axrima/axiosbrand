@@ -1,4 +1,4 @@
-# SIB CMS
+# AXICMS
 
 ![Shop screenshot](shop.png)
 

@@ -28,7 +28,7 @@ export const pageApi = {
     apiClient.get<{ pages: Page[] }>(`/pages?active=${activeOnly}`),
   getBySlug: (slug: string, languageCode?: string) => {
     const params = languageCode ? `?languageCode=${languageCode}` : '';
-    return apiClient.get<{ page: Page }>(`/pages/slug/${slug}${params}`);
+    return apiClient.get<{ page: Page }>(`/pages/slug/${slug}${params}`, { cache: 'no-store' });
   },
   getById: (id: string) => apiClient.get<{ page: Page }>(`/pages/admin/${id}`),
   create: (data: CreatePageDto) => apiClient.post<{ page: Page }>('/pages', data),

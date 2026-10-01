@@ -7,7 +7,11 @@
     releaseCatalogImageSlot,
   } from '$lib/utils/catalog-image-queue';
   import type { MediaLoadStatus } from '$lib/utils/image.utils';
-  import { isProxiedStorefrontMedia, resolveStorefrontMediaSrc } from '$lib/utils/media-url';
+  import {
+    buildStorefrontImageSrcSet,
+    isProxiedStorefrontMedia,
+    resolveStorefrontMediaSrc,
+  } from '$lib/utils/media-url';
 
   export let src: string;
   export let alt: string = '';
@@ -17,6 +21,8 @@
   export let eager: boolean = false;
   export let fetchPriority: 'high' | 'low' | 'auto' = 'auto';
   export let decoding: 'sync' | 'async' | 'auto' = 'async';
+  /** Hint for responsive optimized WebP (`uuid.webp` + `uuid-800.webp`). */
+  export let sizes: string = '(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 800px';
   /** Throttle direct S3 fetches when same-origin /api/media proxy is unavailable. */
   export let catalogQueue: boolean = false;
   export let catalogQueuePriority: 'high' | 'normal' = 'normal';
@@ -32,6 +38,7 @@
   const LOAD_TIMEOUT_MS = 25_000;
 
   $: mediaSrc = resolveStorefrontMediaSrc(src);
+  $: mediaSrcSet = buildStorefrontImageSrcSet(src);
   $: useCatalogQueue = catalogQueue && !isProxiedStorefrontMedia(mediaSrc);
   $: isVideoUrl = typeof mediaSrc === 'string' && VIDEO_EXT.test(mediaSrc);
   $: isAuthenticated = $authStore.isAuthenticated;
@@ -213,6 +220,8 @@
   {:else if displaySrc}
     <img
       src={displaySrc}
+      srcset={mediaSrcSet || undefined}
+      sizes={mediaSrcSet ? sizes : undefined}
       {alt}
       loading={effectiveLoading}
       fetchpriority={imageFetchPriority}

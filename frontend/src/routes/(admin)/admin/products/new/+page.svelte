@@ -1686,6 +1686,52 @@
           </div>
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p class="block text-sm font-medium mb-2">{t('product.material')}</p>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                bind:value={product.material}
+                class="flex-1 px-4 py-2 bg-white border border-gray-300 text-black"
+                placeholder={t('product.materialPlaceholder')}
+              />
+              <label class="flex items-center gap-1 text-xs whitespace-nowrap">
+                <input type="checkbox" bind:checked={product.hideMaterial} class="w-4 h-4" />
+                <span>{t('common.hide')}</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <p class="block text-sm font-medium mb-2">{t('product.lining')}</p>
+            <div class="flex items-center gap-2">
+              <input
+                type="text"
+                bind:value={product.lining}
+                class="flex-1 px-4 py-2 bg-white border border-gray-300 text-black"
+                placeholder={t('product.liningPlaceholder')}
+              />
+              <label class="flex items-center gap-1 text-xs whitespace-nowrap">
+                <input type="checkbox" bind:checked={product.hideLining} class="w-4 h-4" />
+                <span>{t('common.hide')}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="productApplication" class="block text-sm font-medium mb-2">
+              {t('product.application')} ({t('common.optional')})
+            </label>
+            <textarea
+              id="productApplication"
+              bind:value={product.application}
+              rows="3"
+              class="w-full px-4 py-2 bg-white border border-gray-300 text-black"
+            ></textarea>
+          </div>
+        </div>
+
         <div>
           <label for="productCountryOfOrigin" class="block text-sm font-medium mb-2">
             {t('product.countryOfOrigin')} ({t('common.optional')})
@@ -1715,6 +1761,100 @@
             </p>
           {/if}
         </div>
+      </div>
+    {/if}
+
+    {#if formTab === 'warehouse'}
+      <div class="bg-dark-light p-6 space-y-6">
+        <div>
+          <h3 class="text-xl font-medium">{t('product.warehouseInventory')}</h3>
+          <p class="mt-1 text-sm text-accent-muted">{t('product.selectWarehouseHint')}</p>
+        </div>
+
+        <div>
+          <label for="initialWarehouse" class="block text-sm font-medium mb-2">
+            {t('warehouse.selectWarehouse')}
+          </label>
+          <select
+            id="initialWarehouse"
+            bind:value={selectedWarehouseId}
+            class="w-full px-4 py-2 bg-white border border-gray-300 text-black"
+          >
+            <option value="">{t('warehouse.selectWarehouse')}</option>
+            {#each warehouses.filter((warehouse) => warehouse.isActive) as warehouse}
+              <option value={warehouse.id}>{warehouse.name}</option>
+            {/each}
+          </select>
+        </div>
+
+        {#if selectedWarehouseId}
+          {@const sizeEntries = Object.keys(stockBySize)}
+          {#if sizeEntries.length > 0}
+            <div>
+              <h4 class="text-base font-medium">{t('product.stockBySize')}</h4>
+              <p class="mt-1 mb-4 text-sm text-accent-muted">{t('product.stockBySizeHint')}</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {#each sizeEntries as size}
+                  <div class="p-4 bg-white border border-gray-300 space-y-3">
+                    <p class="font-medium text-black">{size}</p>
+                    <div>
+                      <label for={`initialQuantity-${size}`} class="block text-xs mb-1">
+                        {t('warehouse.quantity')}
+                      </label>
+                      <input
+                        id={`initialQuantity-${size}`}
+                        type="number"
+                        min="0"
+                        step="1"
+                        bind:value={stockBySize[size]}
+                        class="w-full px-3 py-2 bg-white border border-gray-300 text-black"
+                      />
+                    </div>
+                    <select
+                      aria-label={statusLabels[stockBySizeStatus[size] || warehouseStatus]}
+                      bind:value={stockBySizeStatus[size]}
+                      class="w-full px-3 py-2 bg-white border border-gray-300 text-black"
+                    >
+                      {#each statusOptions as option}
+                        <option value={option.value}>{option.label}</option>
+                      {/each}
+                    </select>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {:else}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="initialWarehouseQuantity" class="block text-sm font-medium mb-2">
+                  {t('warehouse.quantity')}
+                </label>
+                <input
+                  id="initialWarehouseQuantity"
+                  type="number"
+                  min="0"
+                  step="1"
+                  bind:value={warehouseQuantity}
+                  class="w-full px-4 py-2 bg-white border border-gray-300 text-black"
+                />
+              </div>
+              <div>
+                <label for="initialWarehouseStatus" class="block text-sm font-medium mb-2">
+                  Status
+                </label>
+                <select
+                  id="initialWarehouseStatus"
+                  bind:value={warehouseStatus}
+                  class="w-full px-4 py-2 bg-white border border-gray-300 text-black"
+                >
+                  {#each statusOptions as option}
+                    <option value={option.value}>{option.label}</option>
+                  {/each}
+                </select>
+              </div>
+            </div>
+          {/if}
+        {/if}
       </div>
     {/if}
 

@@ -4,6 +4,7 @@ import { config } from '../config/env';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { normalizeUploadedFileName } from '../utils/file-upload';
+import { optimizeImageSet } from '../utils/image-optimize.utils';
 
 class StorageService {
   private minioClient: Minio.Client;
@@ -103,8 +104,29 @@ class StorageService {
     }
   }
 
+  private async putPublicObject(
+    objectName: string,
+    buffer: Buffer,
+    contentType: string,
+    originalName: string
+  ): Promise<string> {
+    await this.minioClient.putObject(
+      this.bucketName,
+      objectName,
+      buffer,
+      buffer.length,
+      {
+        'Content-Type': contentType,
+        'Original-Name': originalName,
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      }
+    );
+    return this.getPublicUrl(objectName);
+  }
+
   /**
-   * Upload a file to MinIO
+   * Upload a file to MinIO.
+   * Raster images are converted to WebP (max 1600px) + optional 800px sibling for srcset.
    * @param file - Multer file object
    * @param folder - Folder path in bucket (e.g., 'products', 'lookbook')
    * @returns Public URL of the uploaded file
@@ -117,25 +139,43 @@ class StorageService {
       await this.ensureBucketReady();
 
       const normalizedOriginalName = normalizeUploadedFileName(file.originalname);
-      const fileExtension = path.extname(normalizedOriginalName);
-      const fileName = `${folder}/${uuidv4()}${fileExtension}`;
-      const metaData = {
-        'Content-Type': file.mimetype,
-        'Original-Name': normalizedOriginalName,
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      };
+      const id = uuidv4();
+      const optimized = await optimizeImageSet(file.buffer, file.mimetype);
 
-      await this.minioClient.putObject(
-        this.bucketName,
+      if (optimized) {
+        const primaryName = `${folder}/${id}${optimized.primary.extension}`;
+        const publicUrl = await this.putPublicObject(
+          primaryName,
+          optimized.primary.buffer,
+          optimized.primary.contentType,
+          normalizedOriginalName
+        );
+
+        if (optimized.small) {
+          const smallName = `${folder}/${id}-800${optimized.small.extension}`;
+          try {
+            await this.putPublicObject(
+              smallName,
+              optimized.small.buffer,
+              optimized.small.contentType,
+              normalizedOriginalName
+            );
+          } catch (smallError) {
+            console.warn('Failed to upload 800w image variant:', smallError);
+          }
+        }
+
+        return publicUrl;
+      }
+
+      const fileExtension = path.extname(normalizedOriginalName);
+      const fileName = `${folder}/${id}${fileExtension}`;
+      return await this.putPublicObject(
         fileName,
         file.buffer,
-        file.size,
-        metaData
+        file.mimetype,
+        normalizedOriginalName
       );
-
-      // Return public URL
-      const publicUrl = this.getPublicUrl(fileName);
-      return publicUrl;
     } catch (error) {
       console.error('Error uploading file to MinIO:', error);
       throw new Error('Failed to upload file to storage');

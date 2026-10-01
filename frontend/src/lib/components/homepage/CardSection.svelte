@@ -33,6 +33,7 @@
                 {#if card.videoUrl}
                   <HomepageAutoplayVideo
                     src={card.videoUrl}
+                    poster={card.imageUrl || ''}
                     autoplay
                     loop
                     muted
@@ -46,7 +47,9 @@
                     src={card.imageUrl}
                     alt={card.title || `Card ${index + 1}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 group-hover:brightness-75"
-                    eager={index === 0}
+                    eager={false}
+                    fetchPriority="low"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                   />
                 {/if}
                 {#if card.title}
@@ -81,6 +84,7 @@
                 {#if card.videoUrl}
                   <HomepageAutoplayVideo
                     src={card.videoUrl}
+                    poster={card.imageUrl || ''}
                     autoplay
                     loop
                     muted
@@ -94,7 +98,9 @@
                     src={card.imageUrl}
                     alt={card.title || `Card ${index + 1}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300 group-hover:brightness-75"
-                    eager={index === 0}
+                    eager={false}
+                    fetchPriority="low"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                   />
                 {/if}
                 {#if card.title}

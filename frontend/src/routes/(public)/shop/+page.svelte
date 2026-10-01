@@ -26,7 +26,7 @@
     setSecondaryMediaStatus,
   } from '$lib/utils/image.utils';
   import { resolveStorefrontMediaSrc } from '$lib/utils/media-url';
-  import { t } from '$lib/utils/i18n';
+  import { t, tLang } from '$lib/utils/i18n';
   import { getErrorMessage } from '$lib/utils/error-handler';
   import { i18nStore } from '$lib/stores/i18n.store';
   import BlurredImage from '$lib/components/BlurredImage.svelte';
@@ -81,6 +81,7 @@
   // Reactive subscription to language store
   $: currentLanguage = $i18nStore;
   let previousLanguage: string | undefined = undefined;
+  let categoriesLanguage = data.languageCode;
 
   let products: Product[] = data.products ?? [];
   let allCategories: Category[] = data.allCategories ?? [];
@@ -1030,10 +1031,12 @@
   }
 
   async function loadCategories() {
+    const requestedLanguage = currentLanguage;
     try {
       // Load all categories (flat view) with current language
-      const response = await categoryApi.getAll(false, true, false, currentLanguage);
+      const response = await categoryApi.getAll(false, true, false, requestedLanguage);
       allCategories = response.categories;
+      categoriesLanguage = requestedLanguage;
 
       // Filter out Lookbook
       const shopCategories = allCategories.filter((c) => {
@@ -1165,7 +1168,15 @@
 
   // Reload categories when language changes (but not on initial mount)
   $: if (currentLanguage) {
-    if (previousLanguage && previousLanguage !== currentLanguage && allCategories.length > 0) {
+    // SSR cannot read the language stored in localStorage, so +page.ts initially
+    // renders the default language. Refresh that data after hydration as well as
+    // on subsequent language changes.
+    const categoriesUseAnotherLanguage =
+      allCategories.length > 0 && categoriesLanguage !== currentLanguage;
+    const languageChanged =
+      !!previousLanguage && previousLanguage !== currentLanguage && allCategories.length > 0;
+
+    if (categoriesUseAnotherLanguage || languageChanged) {
       loadCategories().then(() => {
         // Reapply category from URL after reload
         applyCategoryFromUrl();
@@ -1194,8 +1205,9 @@
   $: shopHeaderShowSideMenuTab = $settingsStore.shopHeaderShowSideMenuTab ?? false;
   $: shopHeaderCategoryLimit =
     Number.parseInt($settingsStore.shopHeaderCategoryLimit ?? '8', 10) || 8;
-  let shopMenuLabel = t('shop.menu');
-  $: shopMenuLabel = $settingsStore.shopMenuLabel?.trim() || t('shop.menu');
+  // This is a system control, so its label follows the active UI locale.
+  // The old single-language shopMenuLabel setting must not override i18n.
+  $: shopMenuLabel = tLang('shop.menu', currentLanguage);
   $: shopToolbarStyle = $settingsStore.shopToolbarStyle ?? 'minimal';
   $: shopToolbarCorners = $settingsStore.shopToolbarCorners ?? 'square';
   $: shopToolbarDensity = $settingsStore.shopToolbarDensity ?? 'comfortable';

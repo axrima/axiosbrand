@@ -89,7 +89,9 @@ export const homepageApi = {
     if (languageCode) {
       params.append('languageCode', languageCode);
     }
-    return apiClient.get<{ sections: HomepageSection[] }>(`/homepage?${params.toString()}`);
+    return apiClient.get<{ sections: HomepageSection[] }>(`/homepage?${params.toString()}`, {
+      cache: 'no-store',
+    });
   },
   getById: (id: string) => apiClient.get<{ section: HomepageSection }>(`/homepage/admin/${id}`),
   create: (data: CreateHomepageSectionDto) =>

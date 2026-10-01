@@ -3,12 +3,11 @@
   import { page } from '$app/stores';
   import { pageApi, type Page } from '$lib/api/page.api';
   import { goto } from '$app/navigation';
-  import { apiClient } from '$lib/api/client';
+  import { uploadHomepageMedia } from '$lib/api/homepage-upload';
   import { translationApi, type PageTranslation } from '$lib/api/translation.api';
   import { languageApi, type Language } from '$lib/api/language.api';
   import { t } from '$lib/utils/i18n';
   import { resolveApiError } from '$lib/utils/error-handler';
-  import { normalizeUploadFile } from '$lib/utils/file-upload';
   import LoadingBar from '$lib/components/LoadingBar.svelte';
   import { dialogStore } from '$lib/stores/dialog.store';
   import { notificationStore } from '$lib/stores/notification.store';
@@ -378,14 +377,8 @@
   async function uploadImageFile(file: File) {
     uploadingImage = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-
-      const data = await apiClient.post<{ image?: { url?: string }; url?: string }>(
-        '/homepage/upload',
-        uploadFormData
-      );
-      formData.config.imageUrl = data.image?.url || data.url || '';
+      const data = await uploadHomepageMedia(file);
+      formData.config.imageUrl = data.url;
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : t('page.failedToUploadImage');
       notificationStore.error(errorMsg);
@@ -397,14 +390,11 @@
   async function uploadVideoFile(file: File) {
     uploadingVideo = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-
-      const data = await apiClient.post<{ image?: { url?: string }; url?: string }>(
-        '/homepage/upload',
-        uploadFormData
-      );
-      formData.config.videoUrl = data.image?.url || data.url || '';
+      const data = await uploadHomepageMedia(file);
+      formData.config.videoUrl = data.url;
+      if (data.posterUrl) {
+        formData.config.imageUrl = data.posterUrl;
+      }
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : t('page.failedToUploadVideo');
       notificationStore.error(errorMsg);

@@ -112,7 +112,7 @@
           disabled={loading}
           class="flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#0077FF] text-white border-[#0077FF] hover:bg-[#0066DD]"
         >
-          <span class="text-sm font-medium">ВКонтакте</span>
+          <span class="text-sm font-medium">VK</span>
         </button>
       {/if}
 

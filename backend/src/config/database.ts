@@ -1,6 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import { withPrismaPoolDefaults } from './prisma-pool';
+
+const databaseUrl = withPrismaPoolDefaults(process.env.DATABASE_URL || '');
 
 const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: databaseUrl,
+    },
+  },
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
 });
 

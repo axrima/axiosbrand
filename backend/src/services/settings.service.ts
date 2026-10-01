@@ -84,7 +84,41 @@ function applySensitiveValueWrite(
 }
 
 export class SettingsService {
+  /** Short TTL cache — settings are read on nearly every request/cleanup tick. */
+  private static readonly CACHE_TTL_MS = 30_000;
+  private cache: { value: FeatureSettings; expiresAt: number } | null = null;
+  private inflightLoad: Promise<FeatureSettings> | null = null;
+
+  private invalidateCache(): void {
+    this.cache = null;
+  }
+
   async getAllSettings(): Promise<FeatureSettings> {
+    const now = Date.now();
+    if (this.cache && this.cache.expiresAt > now) {
+      return this.cache.value;
+    }
+
+    if (this.inflightLoad) {
+      return this.inflightLoad;
+    }
+
+    this.inflightLoad = this.loadAllSettingsFromDb()
+      .then((value) => {
+        this.cache = {
+          value,
+          expiresAt: Date.now() + SettingsService.CACHE_TTL_MS,
+        };
+        return value;
+      })
+      .finally(() => {
+        this.inflightLoad = null;
+      });
+
+    return this.inflightLoad;
+  }
+
+  private async loadAllSettingsFromDb(): Promise<FeatureSettings> {
     try {
       const settings = await prisma.featureSettings.findMany();
 
@@ -112,17 +146,12 @@ export class SettingsService {
   }
 
   async getSetting(key: string): Promise<unknown> {
-    const setting = await prisma.featureSettings.findUnique({
-      where: { key },
-    });
-
-    if (!setting) {
-      // Return default if exists
-      const defaultKey = key as keyof FeatureSettings;
-      return DEFAULT_SETTINGS[defaultKey] ?? null;
+    const all = await this.getAllSettings();
+    const defaultKey = key as keyof FeatureSettings;
+    if (Object.prototype.hasOwnProperty.call(all, defaultKey)) {
+      return all[defaultKey];
     }
-
-    return maybeDecrypt(key, setting.value);
+    return null;
   }
 
   async getAllSettingsForApi(): Promise<FeatureSettings> {
@@ -154,13 +183,15 @@ export class SettingsService {
 
     // If client sent a masked secret and the row exists, only update metadata (avoid wiping secrets on bulk saves).
     if (skipValueWrite && existing) {
-      return prisma.featureSettings.update({
+      const updated = await prisma.featureSettings.update({
         where: { key },
         data: {
           ...(description !== undefined && { description }),
           ...(updatedBy && { updatedBy }),
         },
       });
+      this.invalidateCache();
+      return updated;
     }
 
     // Masked secret for a non-existing row: nothing to persist.
@@ -171,7 +202,7 @@ export class SettingsService {
     const valueToStore = maybeEncrypt(key, value) ?? value;
 
     if (existing) {
-      return prisma.featureSettings.update({
+      const updated = await prisma.featureSettings.update({
         where: { key },
         data: {
           value: valueToStore as any,
@@ -179,6 +210,8 @@ export class SettingsService {
           ...(updatedBy && { updatedBy }),
         },
       });
+      this.invalidateCache();
+      return updated;
     }
 
     // Determine category based on key
@@ -205,7 +238,7 @@ export class SettingsService {
       category = 'DELIVERY';
     }
 
-    return prisma.featureSettings.create({
+    const created = await prisma.featureSettings.create({
       data: {
         key,
         value: valueToStore as any,
@@ -214,6 +247,8 @@ export class SettingsService {
         updatedBy,
       },
     });
+    this.invalidateCache();
+    return created;
   }
 
   async updateMultipleSettings(
@@ -239,12 +274,14 @@ export class SettingsService {
       updatedBy,
     }));
 
-    return prisma.featureSettings.createMany({
+    const result = await prisma.featureSettings.createMany({
       data: defaults.map((row) => ({
         ...row,
         value: (maybeEncrypt(row.key, row.value) ?? row.value) as any,
       })),
     });
+    this.invalidateCache();
+    return result;
   }
 
   private getCategoryForKey(key: string): string {

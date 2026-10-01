@@ -16,13 +16,12 @@
   import HomepageAdminDrawer from '$lib/components/homepage/HomepageAdminDrawer.svelte';
   import HomepageEditableSectionFrame from '$lib/components/homepage/HomepageEditableSectionFrame.svelte';
   import LazyComponent from '$lib/components/LazyComponent.svelte';
-  import { apiClient } from '$lib/api/client';
+  import { uploadHomepageMedia } from '$lib/api/homepage-upload';
   import {
     isAuthenticationError,
     isRateLimitError,
     getErrorMessage,
   } from '$lib/utils/error-handler';
-  import { normalizeUploadFile } from '$lib/utils/file-upload';
   import AuthError from '$lib/components/AuthError.svelte';
   import { notificationStore } from '$lib/stores/notification.store';
   import { i18nStore } from '$lib/stores/i18n.store';
@@ -200,13 +199,18 @@
     }
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
+      const nextConfig = {
+        ...(sourceSection.config || {}),
+        [target]: data.url,
+      } as Record<string, unknown>;
+      if (target === 'videoUrl' && data.posterUrl) {
+        nextConfig.imageUrl = data.posterUrl;
+      }
 
       const nextSection: HomepageSection = {
         ...sourceSection,
-        config: { ...(sourceSection.config || {}), [target]: data.url },
+        config: nextConfig,
         updatedAt: new Date().toISOString(),
       };
 
@@ -225,9 +229,7 @@
     if (!sourceSection) return;
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
       const nextConfig = { ...(sourceSection.config || {}) } as Record<string, unknown>;
 
       if (field.startsWith('config.cards.')) {
@@ -247,13 +249,16 @@
           card.videoUrl = '';
         }
         if (cardKey === 'videoUrl') {
-          card.imageUrl = '';
+          card.imageUrl = data.posterUrl || '';
         }
         cards[cardIndex] = card;
         nextConfig.cards = cards;
       } else {
         const configKey = field.replace('config.', '');
         nextConfig[configKey] = data.url;
+        if (configKey === 'videoUrl' && data.posterUrl) {
+          nextConfig.imageUrl = data.posterUrl;
+        }
       }
 
       const nextSection: HomepageSection = {
@@ -319,7 +324,10 @@
 
   onMount(async () => {
     previousLanguage = currentLanguage;
-    if (!hasInitialData) {
+    // The universal page load cannot read the browser's saved language and therefore
+    // supplies the default-language payload during SSR. Refresh it after hydration
+    // when the actual selected language is different.
+    if (!hasInitialData || (initialLanguageCode && initialLanguageCode !== currentLanguage)) {
       await new Promise((resolve) => setTimeout(resolve, 0));
       await loadSections();
     }

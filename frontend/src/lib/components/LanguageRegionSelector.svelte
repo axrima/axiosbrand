@@ -9,8 +9,9 @@
   import {
     applyCountrySelection,
     applyLanguageSelection,
-    getLocalePreferenceMode,
+    initLocaleFromBrowser,
     resolveCountryForLanguage,
+    selectedCountryStore,
     setLocalePreferenceMode,
   } from '$lib/utils/locale-preferences';
 
@@ -25,12 +26,15 @@
 
   $: currentLanguage = $i18nStore;
   $: currentCurrency = $currencyStore;
+  $: if ($selectedCountryStore) {
+    selectedCountryCode = $selectedCountryStore;
+  }
 
-  // Load default country on mount
+  // Wait for browser/admin locale init, then sync header label.
   onMount(async () => {
+    await initLocaleFromBrowser();
     await loadData();
-    // Load default country after data is loaded
-    await loadDefaultCountry();
+    await syncSelectedCountryFromStore();
   });
 
   // Cleanup: restore body scroll on destroy
@@ -58,42 +62,35 @@
     }
   }
 
-  async function loadDefaultCountry() {
+  async function syncSelectedCountryFromStore() {
     try {
       if (!browser) return;
 
-      const storedCountryCode = localStorage.getItem('selectedCountryCode');
-      const storedCountry =
-        storedCountryCode && countries.length > 0
-          ? countries.find((c) => c.code === storedCountryCode) || null
-          : null;
-      const mode = getLocalePreferenceMode();
-      const matchedCountry = resolveCountryForLanguage(
+      const code = $selectedCountryStore || localStorage.getItem('selectedCountryCode') || '';
+      const matched =
+        code && countries.length > 0 ? countries.find((c) => c.code === code) || null : null;
+
+      if (matched) {
+        selectedCountryCode = matched.code;
+        selectedCountryStore.set(matched.code);
+        currentCurrency = matched.currency;
+        return;
+      }
+
+      const resolved = resolveCountryForLanguage(
         currentLanguage,
         countries,
-        navigator.language
+        navigator.language || navigator.languages?.[0]
       );
-      const currencyCode = (currentCurrency || '').trim().toUpperCase();
-      const currencyCountry =
-        currencyCode && countries.length > 0
-          ? countries.find((c) => (c.currency || '').trim().toUpperCase() === currencyCode) || null
-          : null;
-      const resolvedCountry =
-        (mode === 'region' && storedCountry) ||
-        storedCountry ||
-        currencyCountry ||
-        matchedCountry ||
-        null;
-
-      if (resolvedCountry) {
-        selectedCountryCode = resolvedCountry.code;
-        currentCurrency = resolvedCountry.currency;
+      if (resolved) {
+        selectedCountryCode = resolved.code;
+        selectedCountryStore.set(resolved.code);
+        currentCurrency = resolved.currency;
       } else {
         selectedCountryCode = '';
-        currentCurrency = currentCurrency || 'USD';
       }
     } catch (error) {
-      console.error('Failed to load default country:', error);
+      console.error('Failed to sync selected country:', error);
     }
   }
 
@@ -158,8 +155,8 @@
     }
   }
 
-  // Get display text for button
-  $: displayText = selectedCountryCode || 'US';
+  // Get display text for button (no hardcoded US — empty until locale init resolves)
+  $: displayText = selectedCountryCode || countries.find((c) => c.isDefault)?.code || '';
 
   // Get current language display name
   $: currentLanguageName =

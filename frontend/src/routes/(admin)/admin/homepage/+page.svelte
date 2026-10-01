@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { adminApi } from '$lib/api/admin.api';
   import { apiClient } from '$lib/api/client';
+  import { uploadHomepageMedia } from '$lib/api/homepage-upload';
   import { productApi } from '$lib/api/product.api';
   import { lookbookApi } from '$lib/api/lookbook.api';
   import { blogApi } from '$lib/api/blog.api';
@@ -798,10 +799,7 @@
   async function uploadImageFile(file: File) {
     uploadingImage = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
       formData.config.imageUrl = data.url;
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : t('homepage.failedToUploadImage');
@@ -814,11 +812,12 @@
   async function uploadVideoFile(file: File) {
     uploadingVideo = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
       formData.config.videoUrl = data.url;
+      // First-frame still → poster for cold loads / incognito (same moment playback starts from).
+      if (data.posterUrl) {
+        formData.config.imageUrl = data.posterUrl;
+      }
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : t('homepage.failedToUploadVideo');
       alert(errorMsg);
@@ -958,10 +957,7 @@
   async function uploadCardFile(file: File, cardIndex: number, isVideo: boolean = false) {
     cardUploadingStates[cardIndex] = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
 
       // Update card with new media URL
       formData.config = {
@@ -970,7 +966,7 @@
           i === cardIndex
             ? {
                 ...card,
-                imageUrl: isVideo ? '' : data.url,
+                imageUrl: isVideo ? data.posterUrl || '' : data.url,
                 videoUrl: isVideo ? data.url : '',
               }
             : card

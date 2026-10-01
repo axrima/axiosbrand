@@ -125,6 +125,7 @@
                 {#if shopCardVideoSupport && isVideoUrl(images[0].url)}
                   <HomepageAutoplayVideo
                     src={images[0].url}
+                    poster={images.find((img) => !isVideoUrl(img.url))?.url || ''}
                     className="w-full h-full object-cover {shopCardHoverAnimation === 'scale'
                       ? 'group-hover:scale-105 transition-transform duration-300'
                       : ''}"

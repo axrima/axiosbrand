@@ -94,7 +94,9 @@
                 src={imageUrl}
                 alt=""
                 className={`w-full h-full object-cover ${mediaHoverClass}`}
-                eager={true}
+                eager={false}
+                fetchPriority="low"
+                sizes="(max-width: 1024px) 100vw, 33vw"
               />
               <HomepageInlineMediaDropzone
                 enabled={inlineEditing}
@@ -143,6 +145,7 @@
                       {#if card.videoUrl}
                         <HomepageAutoplayVideo
                           src={card.videoUrl}
+                          poster={card.imageUrl || ''}
                           autoplay
                           loop
                           muted
@@ -156,7 +159,9 @@
                           src={card.imageUrl}
                           alt={card.title || `Card ${index + 1}`}
                           className="w-full h-full object-cover motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-[1.03]"
-                          eager={index === 0}
+                          eager={false}
+                          fetchPriority="low"
+                          sizes="(max-width: 640px) 50vw, 25vw"
                         />
                       {/if}
                       {#if card.title}
@@ -189,6 +194,7 @@
                       {#if card.videoUrl}
                         <HomepageAutoplayVideo
                           src={card.videoUrl}
+                          poster={card.imageUrl || ''}
                           autoplay
                           loop
                           muted
@@ -210,7 +216,9 @@
                           src={card.imageUrl}
                           alt={card.title || `Card ${index + 1}`}
                           className="w-full h-full object-cover motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-[1.03]"
-                          eager={index === 0}
+                          eager={false}
+                          fetchPriority="low"
+                          sizes="(max-width: 640px) 50vw, 25vw"
                         />
                         <HomepageInlineMediaDropzone
                           enabled={inlineEditing}
@@ -272,6 +280,7 @@
             <div class="absolute inset-0 group overflow-hidden">
               <HomepageAutoplayVideo
                 src={videoUrl}
+                poster={imageUrl}
                 autoplay={videoAutoplay}
                 loop={videoLoop}
                 muted={videoMuted}

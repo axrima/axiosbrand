@@ -40,9 +40,17 @@
       setupGlobalDialogs();
 
       // Language + region: sync with API and browser locale on first load.
-      initLocaleFromBrowser().catch((e) => {
-        console.error('Failed to initialize locale preferences:', e);
-      });
+      initLocaleFromBrowser()
+        .then((shouldReload) => {
+          // One-time reload when auto-detect switches away from the in-memory default
+          // so the first paint is fully translated (avoids reload loops once persisted).
+          if (shouldReload) {
+            window.location.reload();
+          }
+        })
+        .catch((e) => {
+          console.error('Failed to initialize locale preferences:', e);
+        });
 
       // Load settings to apply typography
       settingsStore.load().catch((e) => {

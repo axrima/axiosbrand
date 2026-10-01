@@ -1,8 +1,30 @@
 import prisma from '../config/database';
 import { CreateCategoryDto, UpdateCategoryDto } from '../types/category';
 
+function normalizeLanguageCode(languageCode?: string): string | undefined {
+  if (typeof languageCode !== 'string') return undefined;
+  const normalized = languageCode.trim().toLowerCase();
+  return normalized ? normalized.split('-')[0] : undefined;
+}
+
+type CategoryTranslationValue = {
+  languageCode: string;
+  name?: string | null;
+  description?: string | null;
+};
+
+function findTranslation(
+  translations: CategoryTranslationValue[] | undefined,
+  languageCode: string
+): CategoryTranslationValue | undefined {
+  return translations?.find(
+    (translation) => normalizeLanguageCode(translation.languageCode) === languageCode
+  );
+}
+
 export class CategoryService {
   async getAll(includeChildren = false, mainOnly = false, languageCode?: string) {
+    languageCode = normalizeLanguageCode(languageCode);
     const where: any = {};
     
     if (mainOnly) {
@@ -17,7 +39,9 @@ export class CategoryService {
       const categories = await prisma.category.findMany({
         where,
         include: {
-          children: includeChildren,
+          children: includeChildren
+            ? { include: { translations: languageCode ? true : false } }
+            : false,
           translations: languageCode ? true : false,
           _count: {
             select: {
@@ -36,15 +60,28 @@ export class CategoryService {
           if (languageCode === 'en') {
             return {
               ...category,
+              children: category.children?.map((child: any) => ({
+                ...child,
+                translations: undefined,
+              })),
               translations: undefined, // Remove translations from response
             };
           }
           
-          const translation = category.translations?.find((t: any) => t.languageCode === languageCode);
+          const translation = findTranslation(category.translations, languageCode);
           return {
             ...category,
             name: translation?.name || category.name,
             description: translation?.description || category.description,
+            children: category.children?.map((child: any) => {
+              const childTranslation = findTranslation(child.translations, languageCode);
+              return {
+                ...child,
+                name: childTranslation?.name || child.name,
+                description: childTranslation?.description || child.description,
+                translations: undefined,
+              };
+            }),
             translations: undefined, // Remove translations from response
           };
         });
@@ -89,7 +126,7 @@ export class CategoryService {
               };
             }
             
-            const translation = category.translations?.find((t: any) => t.languageCode === languageCode);
+            const translation = findTranslation(category.translations, languageCode);
             return {
               ...category,
               name: translation?.name || category.name,
@@ -106,6 +143,7 @@ export class CategoryService {
   }
 
   async getAllFlat(languageCode?: string) {
+    languageCode = normalizeLanguageCode(languageCode);
     try {
       const categories = await prisma.category.findMany({
         include: {
@@ -132,7 +170,7 @@ export class CategoryService {
             };
           }
           
-          const translation = category.translations?.find((t: any) => t.languageCode === languageCode);
+          const translation = findTranslation(category.translations, languageCode);
           return {
             ...category,
             name: translation?.name || category.name,
@@ -171,7 +209,7 @@ export class CategoryService {
               };
             }
             
-            const translation = category.translations?.find((t: any) => t.languageCode === languageCode);
+            const translation = findTranslation(category.translations, languageCode);
             return {
               ...category,
               name: translation?.name || category.name,
@@ -188,6 +226,7 @@ export class CategoryService {
   }
 
   async getById(id: string, languageCode?: string) {
+    languageCode = normalizeLanguageCode(languageCode);
     const category = await prisma.category.findUnique({
       where: { id },
       include: {
@@ -214,7 +253,7 @@ export class CategoryService {
         return category;
       }
       
-      const translation = category.translations.find((t) => t.languageCode === languageCode);
+      const translation = findTranslation(category.translations, languageCode);
       if (translation) {
         return {
           ...category,

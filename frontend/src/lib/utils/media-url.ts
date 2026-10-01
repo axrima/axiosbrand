@@ -46,3 +46,23 @@ export function resolveStorefrontMediaSrc(url: string | null | undefined): strin
 
   return url;
 }
+
+/**
+ * Derive srcset from optimized upload convention: `uuid.webp` + sibling `uuid-800.webp`.
+ */
+export function buildStorefrontImageSrcSet(url: string | null | undefined): string {
+  const resolved = resolveStorefrontMediaSrc(url);
+  if (!resolved) return '';
+
+  const match = resolved.match(/^(.*\/[^/?#]+?)(?:-800)?\.webp([?#].*)?$/i);
+  if (!match) return '';
+
+  const base = match[1];
+  const suffix = match[2] || '';
+  // Already the small variant — no srcset needed.
+  if (/\/[^/]+-800$/i.test(base)) return '';
+
+  const small = `${base}-800.webp${suffix}`;
+  const large = `${base}.webp${suffix}`;
+  return `${small} 800w, ${large} 1600w`;
+}

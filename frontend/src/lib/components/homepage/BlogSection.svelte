@@ -77,6 +77,7 @@
                 {#if post.videoUrl}
                   <HomepageAutoplayVideo
                     src={post.videoUrl}
+                    poster={post.thumbnailUrl || ''}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     muted
                     loop

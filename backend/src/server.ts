@@ -514,14 +514,22 @@ async function startServer() {
       const { cartService } = await import('./services/cart.service');
       const { paymentRequestService } = await import('./services/payment-request.service');
       const RESERVATION_CLEANUP_INTERVAL_MS = 60 * 1000; // 1 min
+      let cleanupRunning = false;
       const runCleanup = async () => {
+        // setInterval does not wait — overlapping runs exhaust the Prisma pool (P2024).
+        if (cleanupRunning) {
+          console.warn('[Cart] Cleanup skipped: previous run still in progress');
+          return;
+        }
+        cleanupRunning = true;
         try {
-          await Promise.allSettled([
-            cartService.releaseExpiredCartReservations(),
-            paymentRequestService.releaseExpiredPendingPaymentRequests(),
-          ]);
+          // Sequential to keep peak DB connections low under small pools.
+          await cartService.releaseExpiredCartReservations();
+          await paymentRequestService.releaseExpiredPendingPaymentRequests();
         } catch (e) {
           console.error('[Cart] Cleanup job failed:', e);
+        } finally {
+          cleanupRunning = false;
         }
       };
       await runCleanup(); // run once on startup

@@ -97,7 +97,9 @@
               src={imageUrl}
               alt=""
               className={`absolute inset-0 w-full h-full object-cover ${mediaHoverClass}`}
-              eager={true}
+              eager={false}
+              fetchPriority="low"
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
             <HomepageInlineMediaDropzone
               enabled={inlineEditing}

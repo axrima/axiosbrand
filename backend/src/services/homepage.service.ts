@@ -1,6 +1,5 @@
 import prisma from '../config/database';
 import { CreateHomepageSectionDto, UpdateHomepageSectionDto } from '../types/homepage';
-import { translationService } from './translation.service';
 
 function normalizeLanguageCode(languageCode?: string): string | undefined {
   if (typeof languageCode !== 'string') return undefined;
@@ -18,15 +17,16 @@ export class HomepageService {
       const sections = await prisma.homepageSection.findMany({
         where,
         orderBy: { order: 'asc' },
+        include: { translations: normalizedLanguageCode ? true : false },
       });
 
       // Apply translations if languageCode is provided
       if (normalizedLanguageCode) {
-        const sectionsWithTranslations = await Promise.all(
-          sections.map(async (section) => {
-            const translation = await translationService.getHomepageSectionTranslation(
-              section.id,
-              normalizedLanguageCode
+        const sectionsWithTranslations = sections.map((section) => {
+            // Match normalized codes so existing `ru-RU`/mixed-case records are
+            // also used for a storefront request for `ru`.
+            const translation = section.translations.find(
+              (item) => normalizeLanguageCode(item.languageCode) === normalizedLanguageCode
             );
 
             if (translation) {
@@ -65,19 +65,19 @@ export class HomepageService {
 
               return {
                 ...section,
+                translations: undefined,
                 title: translation.title ?? section.title,
                 config: mergedConfig,
               };
             }
 
-            return section;
-          })
-        );
+            return { ...section, translations: undefined };
+          });
 
         return sectionsWithTranslations;
       }
 
-      return sections;
+      return sections.map((section) => ({ ...section, translations: undefined }));
     } catch (error: unknown) {
       console.error('Error in homepageService.getAllSections:', error);
       

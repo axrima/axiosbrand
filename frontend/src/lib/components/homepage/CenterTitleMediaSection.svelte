@@ -106,6 +106,7 @@
           >
             <HomepageAutoplayVideo
               src={videoUrl}
+              poster={imageUrl}
               autoplay={videoAutoplay}
               loop={videoLoop}
               muted={videoMuted}
@@ -165,7 +166,9 @@
               src={imageUrl}
               alt=""
               className={`w-full h-full object-cover ${mediaHoverClass}`}
-              eager={true}
+              eager={false}
+              fetchPriority="low"
+              sizes="(max-width: 768px) 100vw, min(1152px, 90vw)"
             />
             <HomepageInlineMediaDropzone
               enabled={inlineEditing}

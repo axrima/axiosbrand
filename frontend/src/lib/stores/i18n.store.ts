@@ -68,7 +68,7 @@ const createI18nStore = () => {
 
   return {
     subscribe,
-    setLanguage: async (lang: string): Promise<boolean> => {
+    setLanguage: async (lang: string, options?: { persist?: boolean }): Promise<boolean> => {
       const normalized = normalizeLangCode(lang);
       if (!normalized) return false;
       const allowed = getAllowedCodes();
@@ -77,9 +77,11 @@ const createI18nStore = () => {
       const changed = currentLanguage !== normalized;
       if (changed) {
         updateLanguage(normalized);
-        if (browser) {
-          localStorage.setItem('language', normalized);
-        }
+      }
+
+      // Persist when language changes, or when caller asks (auto-detect may match in-memory default).
+      if (browser && (changed || options?.persist)) {
+        localStorage.setItem('language', normalized);
       }
 
       if (!changed) {

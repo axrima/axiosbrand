@@ -1,7 +1,12 @@
 import prisma from '../config/database';
 import { CreatePageDto, UpdatePageDto } from '../types/page';
 import { sanitizeHtmlContentOrPlain } from '../utils/sanitize';
-import { translationService } from './translation.service';
+
+function normalizeLanguageCode(languageCode?: string): string | undefined {
+  if (typeof languageCode !== 'string') return undefined;
+  const normalized = languageCode.trim().toLowerCase();
+  return normalized ? normalized.split('-')[0] : undefined;
+}
 
 export class PageService {
   async getAllPages(activeOnly: boolean = false) {
@@ -80,8 +85,10 @@ export class PageService {
   }
 
   async getPageBySlug(slug: string, languageCode?: string) {
+    languageCode = normalizeLanguageCode(languageCode);
     const page = await prisma.page.findUnique({
       where: { slug },
+      include: { translations: languageCode ? true : false },
     });
 
     if (!page) {
@@ -90,7 +97,12 @@ export class PageService {
 
     // Apply translations if languageCode is provided
     if (languageCode) {
-      const translation = await translationService.getPageTranslation(page.id, languageCode);
+      // Existing data may contain a regional or differently-cased language code.
+      // Match it the same way as category translations instead of relying on an
+      // exact compound-key lookup.
+      const translation = page.translations.find(
+        (item) => normalizeLanguageCode(item.languageCode) === languageCode
+      );
       
       if (translation) {
         let translatedContent = translation.content || page.content;
@@ -122,6 +134,7 @@ export class PageService {
 
         return {
           ...page,
+          translations: undefined,
           title: translation.title || page.title,
           content: translatedContent,
           metaTitle: translation.metaTitle || page.metaTitle,
@@ -130,7 +143,7 @@ export class PageService {
       }
     }
 
-    return page;
+    return { ...page, translations: undefined };
   }
 
   async getPageById(id: string) {

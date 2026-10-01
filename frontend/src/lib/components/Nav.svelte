@@ -26,6 +26,7 @@
   import {
     applyCountrySelection,
     applyLanguageSelection,
+    selectedCountryStore,
     setLocalePreferenceMode,
   } from '$lib/utils/locale-preferences';
 
@@ -630,13 +631,15 @@
     _currencyTrigger &&
     (() => {
       if (!browser) return '';
+      const fromStore = $selectedCountryStore;
+      if (fromStore) return fromStore;
       const storedCountry = localStorage.getItem('selectedCountryCode');
       if (storedCountry) return storedCountry;
-      const currency = ($currencyStore || 'USD').trim().toUpperCase();
-      const matchedCountry = mobileCountries.find(
-        (c) => (c.currency || '').trim().toUpperCase() === currency
-      );
-      return matchedCountry?.code || 'US';
+      const currency = ($currencyStore || '').trim().toUpperCase();
+      const matchedCountry = currency
+        ? mobileCountries.find((c) => (c.currency || '').trim().toUpperCase() === currency)
+        : null;
+      return matchedCountry?.code || mobileCountries.find((c) => c.isDefault)?.code || '';
     })();
 
   $: currentRegionDisplayMobile = (() => {
@@ -1438,7 +1441,7 @@
             <button
               on:click={toggleSidebar}
               class="p-2 text-gray-600 hover:text-black transition-colors"
-              aria-label="Menu"
+              aria-label={t('menu.title')}
               aria-expanded={sidebarOpen}
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

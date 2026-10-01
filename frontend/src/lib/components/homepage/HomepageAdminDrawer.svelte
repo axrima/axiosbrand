@@ -4,13 +4,12 @@
   import { goto } from '$app/navigation';
   import { authStore } from '$lib/stores/auth.store';
   import { adminApi } from '$lib/api/admin.api';
-  import { apiClient } from '$lib/api/client';
+  import { uploadHomepageMedia } from '$lib/api/homepage-upload';
   import { productApi, type Product } from '$lib/api/product.api';
   import { lookbookApi, type Lookbook } from '$lib/api/lookbook.api';
   import { blogApi, type BlogPost } from '$lib/api/blog.api';
   import { notificationStore } from '$lib/stores/notification.store';
   import { dialogStore } from '$lib/stores/dialog.store';
-  import { normalizeUploadFile } from '$lib/utils/file-upload';
   import { t } from '$lib/utils/i18n';
   import type { CardItem, HomepageSection } from '$lib/api/homepage.api';
 
@@ -565,10 +564,11 @@
     if (target === 'audioUrl') audioUploading = true;
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
       formData.config[target] = data.url;
+      if (target === 'videoUrl' && data.posterUrl) {
+        formData.config.imageUrl = data.posterUrl;
+      }
     } catch (error) {
       notificationStore.error(error instanceof Error ? error.message : t('error.failedToSave'));
     } finally {
@@ -582,15 +582,13 @@
     if (!file) return;
     cardUploading[index] = true;
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', normalizeUploadFile(file));
-      const data = await apiClient.post<{ url: string }>('/homepage/upload', uploadFormData);
+      const data = await uploadHomepageMedia(file);
       const isVideo = file.type.startsWith('video/');
       formData.config.cards = formData.config.cards.map((card, cardIndex) =>
         cardIndex === index
           ? {
               ...card,
-              imageUrl: isVideo ? '' : data.url,
+              imageUrl: isVideo ? data.posterUrl || '' : data.url,
               videoUrl: isVideo ? data.url : '',
             }
           : card

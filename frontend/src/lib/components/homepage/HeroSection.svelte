@@ -129,7 +129,8 @@
     class="relative {sectionHeight} flex items-center justify-center {bgClass} overflow-hidden {paddingTop} {paddingBottom}"
     style={sectionStyleStr}
   >
-    {#if config.imageUrl}
+    {#if config.imageUrl && !(videoUrl && videoUrl.length > 0)}
+      <!-- Image-only hero: skip BlurredImage when video uses the same still as poster. -->
       <div
         class="absolute inset-0 w-full h-full overflow-hidden"
         style="opacity: {parseInt(imageOpacity) / 100}"
@@ -140,6 +141,7 @@
           className="w-full h-full object-cover"
           style="position: absolute; inset: 0;"
           eager={true}
+          sizes="100vw"
         />
         <HomepageInlineMediaDropzone
           enabled={inlineEditing}
@@ -155,6 +157,7 @@
       <div class="absolute inset-0">
         <HomepageAutoplayVideo
           src={videoUrl}
+          poster={config.imageUrl || ''}
           autoplay={videoAutoplay}
           loop={videoLoop}
           muted={videoMuted}
@@ -164,6 +167,7 @@
           style="opacity: {parseInt(imageOpacity) / 100}"
           preload="auto"
           ariaLabel={heroTitle || 'Hero video'}
+          posterPriority="high"
         />
         <HomepageInlineMediaDropzone
           enabled={inlineEditing}
@@ -172,6 +176,15 @@
           hint={t('homepage.editor.replaceVideo')}
           on:select={(event) => emitAssetReplace('config.videoUrl', event.detail)}
         />
+        {#if inlineEditing}
+          <HomepageInlineMediaDropzone
+            enabled={inlineEditing}
+            accept="image/*"
+            label={t('homepage.editor.backgroundImage')}
+            hint={t('homepage.editor.replaceImage')}
+            on:select={(event) => emitAssetReplace('config.imageUrl', event.detail)}
+          />
+        {/if}
       </div>
     {/if}
 
