@@ -4,6 +4,65 @@
 
 Full-featured e-commerce platform for a store: storefront on `SvelteKit`, backend API on `Express + TypeScript`, `PostgreSQL` via `Prisma`, file storage in `S3`/`MinIO`, and a separate RAG setup for `GPT Assistant`.
 
+# Launched Projects
+
+A curated list of projects that are already live and publicly available.
+
+## Projects
+
+| Project | Category | Description | Website | Status |
+|---|---|---|---|---|
+| SHISTEROV | Fashion / Art | Independent local fashion brand focused on avant-garde clothing and art. | [shisterov.to](https://shisterov.to/) | Live |
+
+## Consultation
+
+For consultations on launching, positioning, or developing a project:
+
+**Instagram:** [@chaosledger](https://www.instagram.com/chaosledger/)
+
+## Submit Your Project
+
+Want to add your launched project to this list?
+
+Open a new **GitHub Issue** in this repository and provide the project details.
+
+### Include the following information
+
+```md
+Project name:
+Website:
+Category:
+Short description:
+Founder / Team:
+Contact:
+Launch date:
+```
+
+### Requirements
+
+- The project must already be launched and publicly accessible.
+- The website link must be active.
+- The description should be short and clear.
+- One Issue per project.
+- You may also include links to GitHub, Instagram, X, Telegram, or other public profiles.
+
+After review, the project may be added to the table above.
+
+## Issue Title
+
+Use the following format:
+
+```text
+[SUBMIT] Project Name
+```
+
+Example:
+
+```text
+[SUBMIT] Description 
+```
+
+
 ## Repository Layout
 
 - `frontend/` — storefront and admin UI built with `SvelteKit`
